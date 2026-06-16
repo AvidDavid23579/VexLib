@@ -15,11 +15,11 @@ class DifferentialDrive
     SlewLimiter throttlelimit{5, 10};
     SlewLimiter steerlimit{5, 10};
 
-    PID headingPID{1.0, 0.0, 0.0, 0.0, 0.0, MAX_MILIVOLTS};
+    PID headingPID;
     HeadingHold headinghold{driveIMU, headingPID};
 
   public:
-    DifferentialDrive(pros::MotorGroup& leftMotors, pros::MotorGroup& rightMotors, pros::Imu& driveIMU);
+    DifferentialDrive(pros::MotorGroup& leftMotors, pros::MotorGroup& rightMotors, pros::Imu& driveIMU, PID headingPID);
 
     void tank(bool useHeadingHold = false);
     void arcade(bool useHeadingHold = false);

@@ -11,8 +11,8 @@ Differential Drive Class
 
 */
 
-DifferentialDrive::DifferentialDrive(pros::MotorGroup& leftMotors, pros::MotorGroup& rightMotors, pros::Imu& driveIMU)
-    : leftMotors(leftMotors), rightMotors(rightMotors), driveIMU(driveIMU)
+DifferentialDrive::DifferentialDrive(pros::MotorGroup& leftMotors, pros::MotorGroup& rightMotors, pros::Imu& driveIMU, PID headingPID)
+    : leftMotors(leftMotors), rightMotors(rightMotors), driveIMU(driveIMU), headingPID(headingPID)
 {
 }
 

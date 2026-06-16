@@ -1,8 +1,11 @@
 #include "main.h"
 #include "custom/config.hpp"
+#include "custom/utils.hpp"
 
 
-void initialize() {}
+void initialize() {
+    imuInit(driveIMU);
+}
 
 void disabled() {}
 
@@ -14,9 +17,7 @@ void opcontrol()
 {
     while (true)
     {
-        drive.curvature(true);
-        arm.armControl();
-        arm.clawControl();
+        drive.curvature(false);
 
         pros::delay(LOOP_DELAY);
     }
