@@ -1,8 +1,8 @@
 #pragma once
 #include "pros/motor_group.hpp"
-#include "custom/const.hpp"
-#include "custom/control.hpp"
-#include "custom/assistive_teleop.hpp"
+#include "const.hpp"
+#include "control.hpp"
+#include "assistive_teleop.hpp"
 #include "pros/imu.hpp"
 
 class DifferentialDrive

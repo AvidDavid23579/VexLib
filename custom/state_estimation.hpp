@@ -5,7 +5,7 @@
 #include "pros/imu.hpp"
 #include "pros/motor_group.hpp"
 #include "pros/rotation.hpp"
-#include "custom/utils.hpp"
+#include "utils.hpp"
 
 // Odometry
 class EncoderOdometry

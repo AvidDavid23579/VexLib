@@ -16,6 +16,9 @@ WARNFLAGS+=
 EXTRA_CFLAGS=
 EXTRA_CXXFLAGS=
 
+EXTRA_CXXFLAGS += -I./lib
+EXTRA_CFLAGS += -I./lib
+
 # Set to 1 to enable hot/cold linking
 USE_PACKAGE:=1
 

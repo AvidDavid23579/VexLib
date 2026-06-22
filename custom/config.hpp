@@ -1,6 +1,6 @@
 #pragma once
 #include "pros/motor_group.hpp"
-#include "custom/subsystems.hpp"
+#include "subsystems.hpp"
 #include "pros/imu.hpp"
 
 extern pros::Controller master;

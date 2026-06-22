@@ -1,5 +1,5 @@
 #include "main.h"
-#include "custom/config.hpp"
+#include "config.hpp"
 
 void opcontrol()
 {
