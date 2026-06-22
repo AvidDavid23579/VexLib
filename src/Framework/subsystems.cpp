@@ -1,8 +1,8 @@
-#include "custom/subsystems.hpp"
-#include "custom/const.hpp"
-#include "custom/utils.hpp"
-#include "custom/config.hpp"
-#include "custom/assistive_teleop.hpp"
+#include "subsystems.hpp"
+#include "const.hpp"
+#include "utils.hpp"
+#include "config.hpp"
+#include "assistive_teleop.hpp"
 #include <cmath>
 
 /*

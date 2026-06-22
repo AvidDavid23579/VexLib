@@ -1,9 +1,9 @@
-#include "custom/utils.hpp"
+#include "utils.hpp"
 
 #include <cmath>
 #include <numeric>
 
-#include "custom/const.hpp"
+#include "const.hpp"
 #include "pros/imu.hpp"
 #include "pros/rtos.hpp"
 

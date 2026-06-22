@@ -1,5 +1,5 @@
-#include "custom/config.hpp"
-#include "custom/subsystems.hpp"
+#include "config.hpp"
+#include "subsystems.hpp"
 
 int IMU_PORT = 9;
 

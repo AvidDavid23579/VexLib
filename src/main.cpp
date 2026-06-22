@@ -1,6 +1,6 @@
 #include "main.h"
-#include "custom/config.hpp"
-#include "custom/utils.hpp"
+#include "config.hpp"
+#include "utils.hpp"
 
 
 void initialize() {
