@@ -11,6 +11,9 @@ bin/
 .vscode/
 .cache/
 .d/
+test_files/
+training_files/
+.clang-format
 compile_commands.json
 temp.log
 temp.errors
