@@ -8,7 +8,6 @@
 
 # PROS
 bin/
-.vscode/
 .cache/
 .d/
 .clang-format
