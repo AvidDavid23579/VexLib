@@ -5,8 +5,7 @@
       "includePath": [
         "${workspaceFolder}/**",
         "d:\\CODE\\PROS VEX V5\\VexLib\\include",
-        "d:\\CODE\\PROS VEX V5\\VexLib\\custom",
-        "d:\\CODE\\PROS VEX V5\\VexLib\\include"
+        "d:\\CODE\\PROS VEX V5\\VexLib\\custom"
       ],
       "defines": [
         "_DEBUG",
