@@ -12,8 +12,8 @@ class DifferentialDrive
     pros::MotorGroup& rightMotors;
     pros::Imu& driveIMU;
 
-    SlewLimiter throttlelimit{5, 10};
-    SlewLimiter steerlimit{5, 10};
+    SlewLimiter throttlelimit{250, 500};
+    SlewLimiter steerlimit{250, 500}; // joystick units per second
 
     PID headingPID;
     HeadingHold headinghold{driveIMU, headingPID};
