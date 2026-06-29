@@ -2,6 +2,35 @@
 #include "utils.hpp"
 #include "config.hpp"
 
+double complementary(double longterm, double shortterm, double coefficient)
+{
+    return coefficient * longterm + (1 - coefficient) * shortterm;
+}
+
+EMAFilter::EMAFilter(double time) : time(time), y(0), initialised(false) {}
+
+double EMAFilter::update(double x)
+{
+    double alpha = LOOP_DELAY / (time + LOOP_DELAY);
+
+    if (!initialised)
+    {
+        y = x;
+        initialised = true;
+    }
+    else
+    {
+        y = alpha * x + (1 - alpha) * y;
+    }
+    return y;
+}
+
+void EMAFilter::reset(double value)
+{
+    y = value;
+    initialised = false;
+}
+
 // Constructor
 EncoderOdometry::EncoderOdometry(
     pros::MotorGroup& leftMotors, pros::MotorGroup& rightMotors, double wheelDiam, double trackWidth, double gearRatio)

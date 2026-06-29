@@ -1,7 +1,7 @@
 #include "main.h"
 #include "pros/misc.h"
-#include "custom/auton.hpp"
-#include "custom/config.hpp"
+#include "auton.hpp"
+#include "config.hpp"
 #include <fstream>
 
 

@@ -60,20 +60,3 @@ class FeedForward
 
     double calculate(double velocity, double accel);
 };
-
-// Complementary Filter
-double complementary(double longterm, double shortterm, double coefficient);
-
-class EMAFilter
-{
-  private:
-    double time;
-    double y;
-    bool initialised;
-
-  public:
-    EMAFilter(double time);
-
-    double update(double input);
-    void reset(double value = 0);
-};
