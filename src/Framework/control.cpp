@@ -43,11 +43,13 @@ double BangBang::update(double variable) {
   error = deadband(error);
 
   if (error > 0) {
+    m_prev = m_correction;
     return m_correction;
   } else if (error < 0) {
+    m_prev = -m_correction;
     return -m_correction;
   } else
-    return 0;
+    return m_prev;
 }
 
 /*

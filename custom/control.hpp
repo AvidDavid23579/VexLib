@@ -21,6 +21,7 @@ class BangBang
   private:
     double m_setpoint;
     double m_correction;
+    double m_prev;
 
   public:
     BangBang(double setpoint, double correction);
