@@ -1,55 +1,83 @@
 #include "control.hpp"
-#include "assistive_teleop.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <const.hpp>
+
+#include "assistive_teleop.hpp"
 /*
 
 Slew Delimitation Class
 
 */
-SlewLimiter::SlewLimiter(double accel, double decel) {
-  this->accel = accel;
-  this->decel = decel;
-  prev = 0.0;
+SlewLimiter::SlewLimiter(double dt, double max_accel, double max_decel) {
+    this->dt = dt;
+    this->max_accel = max_accel;
+    this->max_decel = max_decel;
+    prev = 0.0;
 }
 
 double SlewLimiter::update(double input) {
-  double delta = input - prev;
+    double delta = input - prev;
 
-  bool sameDirection = (input * prev >= 0.0);
-  bool increasingMagnitude = std::abs(input) > std::abs(prev);
+    bool sameDirection = (input * prev >= 0.0);
+    bool increasingMagnitude = std::abs(input) > std::abs(prev);
 
-  double limit = ((sameDirection && increasingMagnitude) ? accel : decel) *
-                 (LOOP_DELAY / 1000.0);
+    double limit = ((sameDirection && increasingMagnitude) ? max_accel : max_decel) * dt;
 
-  delta = std::clamp(delta, -limit, limit);
+    delta = std::clamp(delta, -limit, limit);
 
-  prev += delta;
-  return prev;
+    prev += delta;
+    return prev;
 }
 
 // Update the SlewLimiter
 void SlewLimiter::reset(double value) { prev = value; }
+
+JerkSlewLimiter::JerkSlewLimiter(double dt, double max_jerk, double max_accel, double max_decel)
+    : m_dt(dt), m_max_jerk(max_jerk), m_max_accel(max_accel), m_max_decel(max_decel) {}
+
+double JerkSlewLimiter::update(double target_velocity) {
+    double desired_accel = (target_velocity - m_velocity) / m_dt;
+
+    bool sameDirection = (target_velocity * m_velocity >= 0);
+    bool increasingMagnitude = std::abs(target_velocity) > std::abs(m_velocity);
+
+    double accel_limit =
+        ((sameDirection && increasingMagnitude) ? m_max_accel : m_max_decel) * m_dt;
+
+    desired_accel = std::clamp(desired_accel, accel_limit, -accel_limit);
+
+    double max_delta_accel = m_max_jerk * m_dt;
+    double delta_accel = std::clamp(desired_accel - m_accel, -max_delta_accel, max_delta_accel);
+    m_accel += delta_accel;
+
+    m_velocity += m_accel * m_dt;
+    return m_velocity;
+}
+
+void JerkSlewLimiter::reset(double value) {
+    m_velocity = value;
+    m_accel = 0.0;
+}
 
 // Bang Bang control
 BangBang::BangBang(double setpoint, double correction)
     : m_setpoint(setpoint), m_correction(correction) {}
 
 double BangBang::update(double variable) {
-  double error = m_setpoint - variable;
+    double error = m_setpoint - variable;
 
-  error = deadband(error);
+    error = deadband(error);
 
-  if (error > 0) {
-    m_prev = m_correction;
-    return m_correction;
-  } else if (error < 0) {
-    m_prev = -m_correction;
-    return -m_correction;
-  } else
-    return m_prev;
+    if (error > 0) {
+        m_prev = m_correction;
+        return m_correction;
+    } else if (error < 0) {
+        m_prev = -m_correction;
+        return -m_correction;
+    } else
+        return m_prev;
 }
 
 /*
@@ -57,33 +85,38 @@ double BangBang::update(double variable) {
 PID Class
 
 */
-PID::PID(double p, double i, double d, double iZone, double iMax,
-         double outputLimit)
-    : kP(p), kI(i), kD(d), integral(0), integralZone(iZone),
-      integralLimit(iMax), prevMeasurement(0), outputLimit(outputLimit) {}
+PID::PID(double p, double i, double d, double iZone, double iMax, double outputLimit)
+    : kP(p),
+      kI(i),
+      kD(d),
+      integral(0),
+      integralZone(iZone),
+      integralLimit(iMax),
+      prevMeasurement(0),
+      outputLimit(outputLimit) {}
 
 double PID::update(double target, double current) {
-  double error = target - current;
+    double error = target - current;
 
-  if (std::abs(error) < integralZone || integralZone == 0) {
-    integral += error;
-  } else
-    integral = 0;
+    if (std::abs(error) < integralZone || integralZone == 0) {
+        integral += error;
+    } else
+        integral = 0;
 
-  integral = std::clamp(integral, -integralLimit, integralLimit);
+    integral = std::clamp(integral, -integralLimit, integralLimit);
 
-  double derivative = current - prevMeasurement;
+    double derivative = current - prevMeasurement;
 
-  prevMeasurement = current;
+    prevMeasurement = current;
 
-  double output = kP * error + kI * integral - kD * derivative;
+    double output = kP * error + kI * integral - kD * derivative;
 
-  return std::clamp(output, -outputLimit, outputLimit);
+    return std::clamp(output, -outputLimit, outputLimit);
 }
 
 void PID::reset() {
-  integral = 0;
-  prevMeasurement = 0;
+    integral = 0;
+    prevMeasurement = 0;
 }
 
 /*
@@ -93,25 +126,24 @@ FeedForward Class
 */
 
 FeedForward::FeedForward(double kS, double kV, double kA) {
-  this->kS = kS;
-  this->kV = kV;
-  this->kA = kA;
+    this->kS = kS;
+    this->kV = kV;
+    this->kA = kA;
 }
 
 double FeedForward::sign(double velocity) {
-  if (velocity > 0.0)
-    return 1.0;
-  else if (velocity < 0.0)
-    return -1.0;
-  return 0.0;
+    if (velocity > 0.0)
+        return 1.0;
+    else if (velocity < 0.0)
+        return -1.0;
+    return 0.0;
 }
 
 double FeedForward::calculate(double velocity, double accel) {
-  if (velocity == 0.0 and accel == 0.0)
-    return 0.0;
+    if (velocity == 0.0 and accel == 0.0) return 0.0;
 
-  double output = 0.0;
-  output += kS * sign(velocity) + kV * velocity + kA * accel;
+    double output = 0.0;
+    output += kS * sign(velocity) + kV * velocity + kA * accel;
 
-  return output;
+    return output;
 }
