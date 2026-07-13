@@ -5,8 +5,7 @@
 #include <cmath>
 #include <stdexcept>
 
-TrapezoidalProfile::TrapezoidalProfile(TrapezoidalProfileConstraints constraints)
-    : m_constraints(constraints) {}
+TrapezoidalProfile::TrapezoidalProfile(TrapezoidalProfileConstraints constraints) : m_constraints(constraints) {}
 
 void TrapezoidalProfile::generate(TrapezoidalProfileState initial, TrapezoidalProfileState goal) {
     m_initial = initial;
@@ -118,8 +117,7 @@ void SCurveProfile::generate(SCurveState initial, SCurveState goal) {
     } else {
         m_time_cruise = 0.0;
         double b = m_constraints.maxAcceleration * time_jerk_full;
-        double v_candidate =
-            (-b + sqrt(pow(b, 2)) + 4 * m_constraints.maxAcceleration * distance) / 2;
+        double v_candidate = (-b + sqrt(pow(b, 2)) + 4 * m_constraints.maxAcceleration * distance) / 2;
 
         if (v_candidate >= m_constraints.maxAcceleration * time_jerk_full) {
             m_v_peak = v_candidate;
@@ -139,50 +137,80 @@ void SCurveProfile::generate(SCurveState initial, SCurveState goal) {
     }
 }
 
-std::vector<SCurveSegment> SCurveProfile::build_segments() {
+void SCurveProfile::build_segments() {
     double j = m_constraints.maxJerk * m_direction;
 
-    std::array<double, 7> durations = {m_time_jerk, m_time_accel, m_time_jerk, m_time_cruise,
-                                       m_time_jerk, m_time_accel, m_time_jerk};
+    std::array<double, 7> durations = {m_time_jerk, m_time_accel, m_time_jerk, m_time_cruise, m_time_jerk, m_time_accel, m_time_jerk};
 
     std::array<double, 7> jerks = {j, 0.0, -j, 0.0, -j, 0.0, j};
 
+    m_segments.clear();
+    m_segments.reserve(7);
+
+    SCurveState state{m_initial.position, 0.0, 0.0, 0.0};
+
     double timeStart = 0.0;
-    double p0 = m_initial.position;
-    double v0 = 0.0;
-    double a0 = 0.0;
 
     for (size_t i = 0; i < durations.size(); ++i) {
-        m_segments.push_back({timeStart, durations[i], p0, v0, a0, jerks[i]});
+        m_segments.push_back({timeStart, durations[i], state.position, state.velocity, state.acceleration, jerks[i]});
 
-        std::tie(p0, v0, a0) = advance(p0, v0, a0, jerks[i], durations[i]);
+        state = advance(state.position, state.velocity, state.acceleration, jerks[i], durations[i]);
 
         timeStart += durations[i];
     }
-
-    return m_segments;
 }
 
-std::tuple<double, double, double>
-SCurveProfile::advance(
-    double p,
-    double v,
-    double a,
-    double jerk,
-    double dt)
-{
-    double pNew = p + v * dt
-                    + 0.5 * a * dt * dt
-                    + jerk * dt * dt * dt / 6.0;
+SCurveState SCurveProfile::advance(double p, double v, double a, double j, double dt) {
+    double acceleration = a + j * dt;
+    double velocity = v + a * dt + 0.5 * j * dt * dt;
+    double position = p + v * dt + 0.5 * a * dt * dt + (1.0 / 6.0) * j * dt * dt * dt;
 
-    double vNew = v + a * dt
-                    + 0.5 * jerk * dt * dt;
-
-    double aNew = a + jerk * dt;
-
-    return {pNew, vNew, aNew};
+    return {position, velocity, acceleration, j};
 }
 
+SCurveState SCurveProfile::sample(double t) {
+    if (m_total_time == 0.0)
+        return {
+            m_initial.position,
+            0.0,
+            0.0,
+            0.0,
+        };
+
+    if (t <= 0.0)
+        return {
+            m_initial.position,
+            0.0,
+            0.0,
+            0.0,
+        };
+
+    if (t >= m_total_time)
+        return {
+            m_goal.position,
+            0.0,
+            0.0,
+            0.0,
+        };
+
+    const SCurveSegment* segment = nullptr;
+    double localTime = 0.0;
+
+    for (const auto& seg : m_segments) {
+        if (t < seg.t_start + seg.duration) {
+            segment = &seg;
+            localTime = t - seg.t_start;
+            break;
+        }
+    }
+
+    if (segment == nullptr) {
+        segment = &m_segments.back();
+        localTime = segment->duration;
+    }
+
+    return advance(segment->p0, segment->v0, segment->a0, segment->jerk, localTime);
+}
 /*
 
 Path Planning Class

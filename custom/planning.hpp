@@ -81,8 +81,9 @@ class SCurveProfile {
     SCurveProfile(SCurveConstraints constraints);
 
     void generate(SCurveState initial, SCurveState goal);
-    std::vector<SCurveSegment> build_segments();
-    std::tuple<double, double, double> advance(double p, double v, double a, double jerk, double dt);
+    void build_segments();
+    SCurveState advance(double p, double v, double a, double jerk, double dt);
+    SCurveState sample(double t);
 };
 
 /*
