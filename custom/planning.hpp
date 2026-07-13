@@ -63,6 +63,8 @@ struct SCurveSegment {
 class SCurveProfile {
    private:
     SCurveConstraints m_constraints;
+    SCurveState m_initial{};
+    SCurveState m_goal{};
     double m_time_jerk;
     double m_time_accel;
     double m_time_cruise;
@@ -71,7 +73,7 @@ class SCurveProfile {
     double m_v_peak;
 
     double m_total_time;
-    SCurveSegment m_segments;
+    std::vector<SCurveSegment> m_segments;
 
     double m_direction = 1.0;
 
@@ -79,8 +81,8 @@ class SCurveProfile {
     SCurveProfile(SCurveConstraints constraints);
 
     void generate(SCurveState initial, SCurveState goal);
-    SCurveSegment build_segments();
-
+    std::vector<SCurveSegment> build_segments();
+    std::tuple<double, double, double> advance(double p, double v, double a, double jerk, double dt);
 };
 
 /*

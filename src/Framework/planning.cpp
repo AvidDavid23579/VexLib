@@ -1,6 +1,7 @@
 #include "planning.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <stdexcept>
 
@@ -59,19 +60,22 @@ TrapezoidalProfileState TrapezoidalProfile::sample(double t) {
     if (t <= m_t_accel) {
         vel = v0 + a * t;
         pos = v0 * t + 0.5 * a * t * t;
+        a = a;
     } else if (t <= m_t_accel + m_t_cruise) {
         double dt = t - m_t_accel;
         double d_accel = v0 * m_t_accel + 0.5 * a * m_t_accel * m_t_accel;
         vel = v_peak;
         pos = d_accel + v_peak * dt;
+        a = 0;
     } else {
         double dt = t - m_t_accel - m_t_cruise;
         double d_accel = v0 * m_t_accel + 0.5 * a * m_t_accel * m_t_accel;
         double d_cruise = v_peak * m_t_cruise;
         vel = v_peak - a * dt;
         pos = d_accel + d_cruise + v_peak * dt - 0.5 * a * dt * dt;
+        a = -a;
     }
-    return {m_initial.position + m_direction * pos, m_direction * vel};
+    return {m_initial.position + m_direction * pos, m_direction * vel, m_direction * a};
 }
 
 bool TrapezoidalProfile::isFinished(double t) { return m_generated && t >= m_totalTime; }
@@ -133,6 +137,50 @@ void SCurveProfile::generate(SCurveState initial, SCurveState goal) {
 
         SCurveProfile::build_segments();
     }
+}
+
+std::vector<SCurveSegment> SCurveProfile::build_segments() {
+    double j = m_constraints.maxJerk * m_direction;
+
+    std::array<double, 7> durations = {m_time_jerk, m_time_accel, m_time_jerk, m_time_cruise,
+                                       m_time_jerk, m_time_accel, m_time_jerk};
+
+    std::array<double, 7> jerks = {j, 0.0, -j, 0.0, -j, 0.0, j};
+
+    double timeStart = 0.0;
+    double p0 = m_initial.position;
+    double v0 = 0.0;
+    double a0 = 0.0;
+
+    for (size_t i = 0; i < durations.size(); ++i) {
+        m_segments.push_back({timeStart, durations[i], p0, v0, a0, jerks[i]});
+
+        std::tie(p0, v0, a0) = advance(p0, v0, a0, jerks[i], durations[i]);
+
+        timeStart += durations[i];
+    }
+
+    return m_segments;
+}
+
+std::tuple<double, double, double>
+SCurveProfile::advance(
+    double p,
+    double v,
+    double a,
+    double jerk,
+    double dt)
+{
+    double pNew = p + v * dt
+                    + 0.5 * a * dt * dt
+                    + jerk * dt * dt * dt / 6.0;
+
+    double vNew = v + a * dt
+                    + 0.5 * jerk * dt * dt;
+
+    double aNew = a + jerk * dt;
+
+    return {pNew, vNew, aNew};
 }
 
 /*
